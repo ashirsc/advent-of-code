@@ -15,7 +15,7 @@ struct Monkey {
     test: u64,
     if_true: usize,
     if_false: usize,
-    inspections: u32
+    inspections: u64
 }
 
 impl FromStr for Monkey {
@@ -33,7 +33,7 @@ impl FromStr for Monkey {
             .trim()
             .split(',')
             // .collect();
-            .map(|s| s.trim().parse::<u64>().unwrap())
+            .map(|s| s.trim().parse().unwrap())
             .collect();
 
         let operation = lines
@@ -47,13 +47,13 @@ impl FromStr for Monkey {
                 &"old" => Operation::Square,
                 _ => {
                     let n = n
-                        .parse::<u64>()
+                        .parse()
                         .map_err(|_| "Invalid operation multiplier")?;
                     Operation::Multiply(n)
                 }
             },
             ["Operation:", "new", "=", "old", "+", n] => {
-                let n = n.parse::<u64>().map_err(|_| "Invalid operation addition")?;
+                let n = n.parse().map_err(|_| "Invalid operation addition")?;
                 Operation::Add(n)
             }
             _ => return Err("Invalid operation"),
@@ -114,9 +114,10 @@ fn main() {
         .collect::<Result<Vec<Monkey>, _>>()
         .unwrap();
 
-   
+   let test_product:u64 = monkeys.clone().iter().map(|m| m.test).product();
+   println!("product {}", test_product);
 
-    for _round in 0..20 {
+    for _round in 0..10_000 {
         for m in 0..monkeys.len() {
             let mut monkey = monkeys[m].clone();
             for i in 0..monkey.starting_items.len() {
@@ -127,9 +128,10 @@ fn main() {
                     Operation::Square => item * item,
                 };
 
-                let worry_lvl = worry_lvl / 3;
+                let worry_lvl = worry_lvl % test_product;
+                // println!("worry level::{}", worry_lvl);
 
-               
+                
                 if worry_lvl % monkey.test == 0 {
                     monkeys[monkey.if_true].starting_items.push(worry_lvl);
                 } else {
@@ -142,7 +144,7 @@ fn main() {
         }
     }
 
-    let mut scores = monkeys.iter().map(|m| m.inspections).collect::<Vec<u32>>();
+    let mut scores = monkeys.iter().map(|m| m.inspections).collect::<Vec<u64>>();
     scores.sort();
     scores.reverse();
 
