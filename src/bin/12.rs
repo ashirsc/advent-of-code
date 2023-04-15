@@ -15,38 +15,49 @@ fn main() -> io::Result<()> {
     // Change the file name to the path of your text file.
     let file_path = "inputs/12.txt";
     let mut grid = read_grid(file_path)?;
-    let mut start = (0, 0);
     let mut end = (0, 0);
+
+    let mut possible_starts: Vec<(usize, usize)> = Vec::new();
 
     grid.iter_mut().enumerate().for_each(|(i, row)| {
         row.iter_mut().enumerate().for_each(|(j, cell)| {
             if *cell == 'S' {
                 *cell = 'a';
-                start = (j, i);
+                possible_starts.push((j, i));
             } else if *cell == 'E' {
                 *cell = 'z';
                 end = (j, i);
+            } else if *cell =='a' {
+                possible_starts.push((j, i));
             }
         });
     });
 
-    // let visited = vec![vec![false; grid[0].len()]; grid.len()];
-    // let paths = path_find(&grid, start, Vec::new(), end, &visited);
-    // let shortest_path = find_shortest_path(paths);
-    let shortest_path = bfs_shortest_path(&grid, start, end);
+    let mut shortest_path: Option<Vec<Movement>> = None;
+
+    for start in possible_starts {
+        let path = bfs_shortest_path(&grid, start, end);
+        if let Some(path) = path {
+            if let Some(ref shortest) = shortest_path {
+                if path.len() < shortest.len() {
+                    shortest_path = Some(path);
+                }
+            } else {
+                shortest_path = Some(path);
+            }
+        }
+    }
 
     if let Some(path) = shortest_path {
         println!("Shortest path: {}::{:?}", path.len(), path);
-        let output_grid = generate_output(&grid, &path, start);
-        for row in output_grid {
-            println!("{}", row.into_iter().collect::<String>());
-        }
+        
     } else {
         println!("No valid path found");
     }
 
     Ok(())
 }
+
 
 fn bfs_shortest_path(
     grid: &Vec<Vec<char>>,
@@ -102,10 +113,7 @@ fn bfs_shortest_path(
         }
     }
 
-    let output_grid = generate_output(&grid, &longest, start);
-    for row in output_grid {
-        println!("{}", row.into_iter().collect::<String>());
-    }
+    
     None
 }
 
